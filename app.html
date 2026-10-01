@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Đánh giá Chan Chan Spa trên Google Maps</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 50px 16px; margin: 0; background: #f9f9f9; color: #333; }
+        h3 { margin-bottom: 8px; }
+        .hint { max-width: 360px; margin: 0 auto 28px; line-height: 1.5; color: #555; }
+        .btn { display: inline-block; background: #4285F4; color: #fff; text-decoration: none; font-size: 18px; font-weight: bold; padding: 16px 28px; border-radius: 999px; box-shadow: 0 2px 6px rgba(0,0,0,.2); }
+        .btn:active { background: #3367D6; }
+        .fallback { margin-top: 28px; font-size: 14px; color: #777; }
+        .fallback a { color: #4285F4; }
+    </style>
+</head>
+<body>
+    <h3>Cảm ơn quý khách đã ghé Chan Chan Spa!</h3>
+    <p class="hint" id="hint">Bấm nút bên dưới để mở Google Maps và để lại đánh giá.</p>
+    <a class="btn" id="open-app" href="https://g.page/r/CSPskZXuxpzqEBM/review">⭐ Đánh giá trên Google Maps</a>
+    <p class="fallback">Không mở được ứng dụng? <a href="https://g.page/r/CSPskZXuxpzqEBM/review">Đánh giá trên trình duyệt</a></p>
+
+    <script>
+        const PLACE_ID = "ChIJNUFPagAvdTERI-yRle7GnOo";
+        const WEB_REVIEW = "https://g.page/r/CSPskZXuxpzqEBM/review";
+
+        // Android: link nội bộ (không có trong tài liệu chính thức) mà app Google Maps đăng ký để mở thẳng khung viết đánh giá.
+        // Phải để khách tự bấm: Chrome chặn intent:// khi không có thao tác người dùng và sẽ nhảy sang fallback (trình duyệt).
+        const ANDROID_APP = "intent://search.google.com/local/writereview/mobile?placeid=" + PLACE_ID +
+            "#Intent;scheme=https;package=com.google.android.apps.maps;S.browser_fallback_url=" +
+            encodeURIComponent(WEB_REVIEW) + ";end";
+
+        // iOS: app Google Maps không có link mở thẳng khung đánh giá, nên mở trang địa điểm.
+        // Universal link chỉ mở app khi khách bấm; chưa cài app thì mở Google Maps trên Safari, không báo lỗi.
+        const IOS_APP = "https://www.google.com/maps/search/?api=1&query=Chan%20Chan%20Spa&query_place_id=" + PLACE_ID;
+
+        const ua = navigator.userAgent;
+        const isAndroid = /Android/i.test(ua);
+        const isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+        const btn = document.getElementById("open-app");
+        const hint = document.getElementById("hint");
+
+        if (isAndroid) {
+            btn.href = ANDROID_APP;
+            hint.textContent = "Bấm nút bên dưới, ứng dụng Google Maps sẽ mở thẳng khung đánh giá.";
+        } else if (isIOS) {
+            btn.href = IOS_APP;
+            hint.textContent = "Bấm nút bên dưới để mở Google Maps, sau đó chạm vào số sao ở mục “Xếp hạng và đánh giá”.";
+        } else {
+            // Máy tính: form đánh giá trên web dùng tốt, chuyển luôn.
+            window.location.replace(WEB_REVIEW);
+        }
+    </script>
+</body>
+</html>
