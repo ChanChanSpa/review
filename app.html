@@ -22,31 +22,43 @@
     <p class="fallback">Không mở được ứng dụng? <a href="https://g.page/r/CSPskZXuxpzqEBM/review">Đánh giá trên trình duyệt</a></p>
 
     <script>
-        const PLACE_ID = "ChIJNUFPagAvdTERI-yRle7GnOo";
         const WEB_REVIEW = "https://g.page/r/CSPskZXuxpzqEBM/review";
 
-        // Android: link nội bộ (không có trong tài liệu chính thức) mà app Google Maps đăng ký để mở thẳng khung viết đánh giá.
-        // Phải để khách tự bấm: Chrome chặn intent:// khi không có thao tác người dùng và sẽ nhảy sang fallback (trình duyệt).
-        const ANDROID_APP = "intent://search.google.com/local/writereview/mobile?placeid=" + PLACE_ID +
+        // Link địa điểm đã thử mở thẳng app Google Maps (!12e1 = mở khung viết đánh giá).
+        const PLACE_PATH = "www.google.com/maps/place//@10.721057,106.6345534,17z/data=!3m1!4b1!4m3!3m2!1s0x31752f006a4f4135:0xea9cc6ee9591ec23!12e1?entry=ttu&g_ep=EgoyMDI2MDkyOC4wIKXMDSoASAFQAw%3D%3D";
+        const PLACE_URL = "https://" + PLACE_PATH;
+
+        // Android: ép mở bằng app Google Maps; chưa cài app thì Chrome tự chuyển sang form đánh giá trên web.
+        // Phải để khách tự bấm: Chrome chặn intent:// khi không có thao tác người dùng và sẽ nhảy sang fallback.
+        const ANDROID_APP = "intent://" + PLACE_PATH +
             "#Intent;scheme=https;package=com.google.android.apps.maps;S.browser_fallback_url=" +
             encodeURIComponent(WEB_REVIEW) + ";end";
 
-        // iOS: app Google Maps không có link mở thẳng khung đánh giá, nên mở trang địa điểm.
-        // Universal link chỉ mở app khi khách bấm; chưa cài app thì mở Google Maps trên Safari, không báo lỗi.
-        const IOS_APP = "https://www.google.com/maps/search/?api=1&query=Chan%20Chan%20Spa&query_place_id=" + PLACE_ID;
+        // iOS trong Zalo/Facebook/Messenger...: trình duyệt nhúng không mở universal link, dùng scheme riêng của app.
+        const IOS_APP_SCHEME = "comgooglemapsurl://" + PLACE_PATH;
 
         const ua = navigator.userAgent;
         const isAndroid = /Android/i.test(ua);
         const isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+        const isInAppBrowser = /Zalo|FBAN|FBAV|FB_IAB|Messenger|Instagram|Line\/|TikTok/i.test(ua);
         const btn = document.getElementById("open-app");
-        const hint = document.getElementById("hint");
 
         if (isAndroid) {
             btn.href = ANDROID_APP;
-            hint.textContent = "Bấm nút bên dưới, ứng dụng Google Maps sẽ mở thẳng khung đánh giá.";
+        } else if (isIOS && isInAppBrowser) {
+            btn.href = IOS_APP_SCHEME;
+            btn.addEventListener("click", function () {
+                // Máy chưa cài Google Maps: scheme không mở được gì, trang vẫn hiện -> chuyển sang form web.
+                const timer = setTimeout(function () {
+                    if (!document.hidden) window.location.href = WEB_REVIEW;
+                }, 2000);
+                document.addEventListener("visibilitychange", function () {
+                    if (document.hidden) clearTimeout(timer);
+                }, { once: true });
+            });
         } else if (isIOS) {
-            btn.href = IOS_APP;
-            hint.textContent = "Bấm nút bên dưới để mở Google Maps, sau đó chạm vào số sao ở mục “Xếp hạng và đánh giá”.";
+            // Safari/Chrome: universal link mở app nếu đã cài, chưa cài thì mở Google Maps trên web, không báo lỗi.
+            btn.href = PLACE_URL;
         } else {
             // Máy tính: form đánh giá trên web dùng tốt, chuyển luôn.
             window.location.replace(WEB_REVIEW);
