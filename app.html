@@ -6,22 +6,91 @@
     <meta name="robots" content="noindex">
     <title>Đánh giá Chan Chan Spa trên Google Maps</title>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 50px 16px; margin: 0; background: #f9f9f9; color: #333; }
-        h3 { margin-bottom: 8px; }
-        .hint { max-width: 360px; margin: 0 auto 28px; line-height: 1.5; color: #555; }
-        .btn { display: inline-block; background: #4285F4; color: #fff; text-decoration: none; font-size: 18px; font-weight: bold; padding: 16px 28px; border-radius: 999px; box-shadow: 0 2px 6px rgba(0,0,0,.2); }
+        * { box-sizing: border-box; }
+        body { font-family: sans-serif; text-align: center; padding: 32px 16px 40px; margin: 0; background: #f9f9f9; color: #333; }
+        main { max-width: 420px; margin: 0 auto; }
+        h3 { margin: 0 0 20px; }
+        .label { text-align: left; font-size: 15px; font-weight: bold; margin: 0 0 8px; }
+        .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+        .chip { font: inherit; font-size: 14px; padding: 8px 12px; border: 1px solid #ccc; border-radius: 999px; background: #fff; color: #333; cursor: pointer; }
+        .chip.active { background: #e8f0fe; border-color: #4285F4; color: #1a56c4; font-weight: bold; }
+        textarea { width: 100%; min-height: 110px; font: inherit; font-size: 16px; line-height: 1.5; padding: 12px; border: 1px solid #ccc; border-radius: 12px; resize: vertical; background: #fff; color: #333; }
+        .shuffle { font: inherit; font-size: 14px; margin: 8px 0 24px; padding: 8px 14px; border: none; border-radius: 999px; background: #eee; color: #333; cursor: pointer; }
+        .btn { display: block; background: #4285F4; color: #fff; text-decoration: none; font-size: 18px; font-weight: bold; padding: 16px 20px; border-radius: 999px; box-shadow: 0 2px 6px rgba(0,0,0,.2); }
         .btn:active { background: #3367D6; }
-        .fallback { margin-top: 28px; font-size: 14px; color: #777; }
+        .steps { margin: 14px 0 0; font-size: 14px; line-height: 1.5; color: #555; }
+        .toast { margin: 10px 0 0; font-size: 14px; color: #188038; font-weight: bold; min-height: 1.5em; }
+        .fallback { margin-top: 24px; font-size: 14px; color: #777; }
         .fallback a { color: #4285F4; }
     </style>
 </head>
 <body>
+<main>
     <h3>Cảm ơn quý khách đã ghé Chan Chan Spa!</h3>
-    <p class="hint" id="hint">Bấm nút bên dưới để mở Google Maps và để lại đánh giá.</p>
-    <a class="btn" id="open-app" href="https://g.page/r/CSPskZXuxpzqEBM/review">⭐ Đánh giá trên Google Maps</a>
+
+    <p class="label">Quý khách đã dùng dịch vụ nào?</p>
+    <div class="chips" id="chips"></div>
+
+    <p class="label">Gợi ý nhận xét (quý khách có thể sửa lại theo ý mình):</p>
+    <textarea id="review-text" aria-label="Nội dung nhận xét"></textarea>
+    <button class="shuffle" id="shuffle" type="button">🔄 Gợi ý khác</button>
+
+    <a class="btn" id="open-app" href="https://g.page/r/CSPskZXuxpzqEBM/review">📋 Sao chép &amp; mở Google Maps</a>
+    <p class="toast" id="toast" role="status"></p>
+    <p class="steps">Trong Google Maps: chọn số sao → nhấn giữ vào ô nhận xét → chọn <b>Dán</b>.</p>
+
     <p class="fallback">Không mở được ứng dụng? <a href="https://g.page/r/CSPskZXuxpzqEBM/review">Đánh giá trên trình duyệt</a></p>
+</main>
 
     <script>
+        // Gợi ý nhận xét theo nhóm dịch vụ. Sửa/thêm câu ở đây; nên viết cụ thể và khác nhau,
+        // vì Google có thể lọc bỏ các đánh giá trùng nội dung.
+        const SUGGESTIONS = {
+            "Chung": [
+                "Không gian spa sạch sẽ, yên tĩnh, nhân viên nhẹ nhàng và chu đáo. Mình rất hài lòng, sẽ quay lại.",
+                "Nhân viên tư vấn nhiệt tình, làm kỹ và cẩn thận. Giá cả hợp lý so với chất lượng.",
+                "Lần đầu ghé Chan Chan Spa mà thấy rất ưng, phục vụ tận tình, không gian thơm và thoải mái.",
+                "Spa nhỏ xinh, sạch sẽ, các bạn kỹ thuật viên tay nghề tốt. Thư giãn hẳn sau buổi làm.",
+                "Đặt lịch nhanh, đến là được phục vụ ngay, không phải chờ lâu. Sẽ giới thiệu thêm bạn bè.",
+                "Dịch vụ tốt, giá rõ ràng, không chèo kéo mua thêm. Rất đáng để thử."
+            ],
+            "Gội đầu dưỡng sinh": [
+                "Gội đầu dưỡng sinh ở đây rất thư giãn, massage cổ vai gáy đã lắm, nằm xong nhẹ cả người.",
+                "Nước gội thảo dược thơm dễ chịu, bạn nhân viên gội kỹ, bấm huyệt vừa tay. Suýt ngủ quên luôn.",
+                "Gội đầu kèm massage mặt và đắp mặt nạ, giá hợp lý mà làm rất kỹ. Sẽ quay lại thường xuyên.",
+                "Sau giờ làm ghé gội đầu dưỡng sinh là chuẩn bài, đỡ mỏi cổ vai gáy, tóc sạch và thơm.",
+                "Không gian yên tĩnh, giường nằm êm, nước ấm vừa phải. Trải nghiệm gội đầu rất thoải mái.",
+                "Bạn nhân viên hỏi han lực tay có vừa không, rất chu đáo. Gội xong thấy đầu óc nhẹ nhõm hẳn."
+            ],
+            "Chăm sóc da mụn": [
+                "Lấy nhân mụn nhẹ tay, làm kỹ và sạch sẽ. Da dịu hẳn sau buổi làm.",
+                "Bạn kỹ thuật viên soi da và tư vấn rõ ràng, không ép mua thêm liệu trình. Mình thấy rất yên tâm.",
+                "Mình bị mụn khá lâu, đến đây được chăm sóc tận tình, dặn dò kỹ cách chăm da ở nhà.",
+                "Lấy mụn ít đau hơn mình nghĩ, làm xong có đắp mặt nạ làm dịu da. Giá hợp lý.",
+                "Spa sạch sẽ, quy trình chăm sóc da mụn bài bản, giải thích rõ từng bước. Sẽ theo tiếp liệu trình."
+            ],
+            "Massage trị liệu": [
+                "Massage tinh dầu thơm, lực tay vừa phải, bấm đúng chỗ mỏi. Xong buổi thấy cơ thể nhẹ nhõm.",
+                "Trị liệu cổ vai gáy rất đã, dân văn phòng như mình nên thử. Sẽ quay lại.",
+                "Massage đá nóng thư giãn cực kỳ, phòng ấm áp, nhạc nhẹ nhàng. Rất đáng tiền.",
+                "Kỹ thuật viên tay nghề tốt, hỏi kỹ chỗ đau mỏi trước khi làm. Rất chuyên nghiệp.",
+                "Không gian riêng tư, sạch sẽ, khăn thơm. Massage xong về ngủ ngon hẳn."
+            ],
+            "Chăm sóc & trẻ hóa da": [
+                "Làm chăm sóc da mặt ở đây thấy da mềm và ẩm hơn hẳn, nhân viên làm rất nhẹ nhàng.",
+                "Massage mặt kết hợp đắp mặt nạ rất thư giãn, sản phẩm thơm dịu, da mình không bị kích ứng.",
+                "Được tư vấn liệu trình phù hợp với da, giải thích rõ từng bước. Rất hài lòng.",
+                "Sau buổi làm da mình trông tươi và căng hơn, không gian lại dễ chịu. Sẽ quay lại.",
+                "Quy trình kỹ, sạch sẽ, nhân viên giới thiệu rõ sản phẩm dùng cho da. Rất yên tâm."
+            ],
+            "Phun xăm thẩm mỹ": [
+                "Phun chân mày tự nhiên, dáng hợp khuôn mặt. Chị kỹ thuật viên tư vấn rất có tâm.",
+                "Phun môi lên màu đẹp, làm nhẹ tay, ít đau. Được dặn dò chăm sóc sau phun rất kỹ.",
+                "Được đo và vẽ dáng trước khi phun, chỉnh đến khi mình ưng mới làm. Rất yên tâm.",
+                "Không gian sạch sẽ, làm cẩn thận từng chút. Kết quả tự nhiên, mình rất thích."
+            ]
+        };
+
         const WEB_REVIEW = "https://g.page/r/CSPskZXuxpzqEBM/review";
 
         // Link địa điểm đã thử mở thẳng app Google Maps (!12e1 = mở khung viết đánh giá).
@@ -42,7 +111,70 @@
         const isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
         const isInAppBrowser = /Zalo|FBAN|FBAV|FB_IAB|Messenger|Instagram|Line\/|TikTok/i.test(ua);
         const btn = document.getElementById("open-app");
+        const textarea = document.getElementById("review-text");
+        const toast = document.getElementById("toast");
+        const chips = document.getElementById("chips");
 
+        // --- Gợi ý nhận xét ---
+        let group = "Chung";
+        let lastIndex = -1;
+
+        function suggest() {
+            const list = SUGGESTIONS[group];
+            let i = Math.floor(Math.random() * list.length);
+            if (list.length > 1 && i === lastIndex) i = (i + 1) % list.length;
+            lastIndex = i;
+            textarea.value = list[i];
+        }
+
+        Object.keys(SUGGESTIONS).filter(function (name) { return name !== "Chung"; }).forEach(function (name) {
+            const chip = document.createElement("button");
+            chip.type = "button";
+            chip.className = "chip";
+            chip.textContent = name;
+            chip.addEventListener("click", function () {
+                const wasActive = chip.classList.contains("active");
+                chips.querySelectorAll(".chip").forEach(function (c) { c.classList.remove("active"); });
+                group = wasActive ? "Chung" : name;
+                if (!wasActive) chip.classList.add("active");
+                lastIndex = -1;
+                suggest();
+            });
+            chips.appendChild(chip);
+        });
+
+        document.getElementById("shuffle").addEventListener("click", suggest);
+        suggest();
+
+        function legacyCopy(text) {
+            const ta = document.createElement("textarea");
+            ta.value = text;
+            ta.setAttribute("readonly", "");
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            ta.setSelectionRange(0, text.length);
+            try { document.execCommand("copy"); } catch (e) {}
+            document.body.removeChild(ta);
+        }
+
+        // Gọi ngay trong lúc khách bấm (trình duyệt chỉ cho ghi clipboard khi có thao tác người dùng),
+        // không chặn việc mở link để universal link / intent vẫn được tính là do khách bấm.
+        function copyReview() {
+            const text = textarea.value.trim();
+            if (!text) return;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).catch(function () { legacyCopy(text); });
+            } else {
+                legacyCopy(text);
+            }
+            toast.textContent = "✓ Đã sao chép nhận xét";
+        }
+
+        btn.addEventListener("click", copyReview);
+
+        // --- Mở Google Maps ---
         if (isAndroid) {
             btn.href = ANDROID_APP;
         } else if (isIOS && isInAppBrowser) {
@@ -59,10 +191,8 @@
         } else if (isIOS) {
             // Safari/Chrome: universal link mở app nếu đã cài, chưa cài thì mở Google Maps trên web, không báo lỗi.
             btn.href = PLACE_URL;
-        } else {
-            // Máy tính: form đánh giá trên web dùng tốt, chuyển luôn.
-            window.location.replace(WEB_REVIEW);
         }
+        // Máy tính: giữ link form đánh giá trên web (href mặc định).
     </script>
 </body>
 </html>
